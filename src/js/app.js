@@ -135,6 +135,24 @@ async function probeEngineName(path) {
 async function ensureDefaultEngines() {
   if (!hasApi) return;
   const paths = await window.api.engineDefaults();
+  // 同梱の Sailfish の場所が変わったとき（アンインストール、zip 版の移動など）は、
+  // 見つからなくなった古い登録を今の場所に付け替え、重複した登録はまとめる
+  const isBundled = p => /[\\/]resources[\\/]engines[\\/]sailfish\.exe$/i.test(p || '');
+  const cur = paths.find(isBundled);
+  if (cur) {
+    for (const e of S.engines) {
+      if (isBundled(e.path) && e.path !== cur && !(await window.api.engineExists(e.path))) e.path = cur;
+    }
+    const keep = S.engines.find(e => e.path === cur);
+    const dupIds = new Set(S.engines.filter(e => e.path === cur && e !== keep).map(e => e.id));
+    if (dupIds.size) {
+      S.engines = S.engines.filter(e => !dupIds.has(e.id));
+      const fix = id => (dupIds.has(id) ? keep.id : id);
+      S.analysisEngine = fix(S.analysisEngine);
+      if (S.lastPlay) S.lastPlay.engine = fix(S.lastPlay.engine);
+      if (S.subEngines) S.subEngines = [...new Set(S.subEngines.map(fix))];
+    }
+  }
   for (const p of paths) {
     if (S.engines.some(e => e.path === p)) continue;
     let name = 'Sailfish';

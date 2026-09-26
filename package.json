@@ -1,7 +1,7 @@
 {
   "name": "shogi-arena",
   "productName": "Shogi Arena",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "ゲームのように遊べる将棋 GUI（USI エンジン対応）",
   "main": "main.js",
   "author": "dax",

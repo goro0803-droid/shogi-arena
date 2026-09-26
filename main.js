@@ -52,6 +52,7 @@ function createWindow() {
 ipcMain.handle('engine:start', (_e, exePath) => {
   const id = nextId++;
   let proc;
+  if (!exePath || !fs.existsSync(exePath)) return { error: `エンジンが見つかりません: ${exePath}` };
   try {
     proc = spawn(exePath, [], { cwd: path.dirname(exePath), windowsHide: true });
   } catch (err) {
@@ -102,6 +103,8 @@ ipcMain.handle('engine:defaults', () => {
   ];
   return candidates.filter(p => fs.existsSync(p));
 });
+
+ipcMain.handle('engine:exists', (_e, p) => !!p && fs.existsSync(p));
 
 // ---- ファイル ----
 
