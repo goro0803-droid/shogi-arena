@@ -1,0 +1,71 @@
+{
+  "name": "shogi-arena",
+  "productName": "Shogi Arena",
+  "version": "1.0.0",
+  "description": "ゲームのように遊べる将棋 GUI（USI エンジン対応）",
+  "main": "main.js",
+  "author": "dax",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "icon": "electron build/make-icon.js",
+    "engine": "node build/copy-engine.js",
+    "dist": "node build/copy-engine.js && electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^44.4.5",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "io.github.dax.shogiarena",
+    "productName": "Shogi Arena",
+    "copyright": "Copyright (c) 2026 dax",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "build/icon.png",
+      "LICENSE"
+    ],
+    "extraResources": [
+      {
+        "from": "engines",
+        "to": "engines",
+        "filter": [
+          "sailfish.exe"
+        ]
+      }
+    ],
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "ShogiArena-${version}-${os}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "将棋アリーナ",
+      "uninstallDisplayName": "将棋アリーナ (Shogi Arena)",
+      "artifactName": "ShogiArena-Setup-${version}.${ext}",
+      "license": "LICENSE"
+    }
+  }
+}

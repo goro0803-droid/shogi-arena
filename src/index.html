@@ -1,0 +1,124 @@
+﻿<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data: blob:">
+  <title>Shogi Arena</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-theme="seigaiha">
+  <div id="bg"></div>
+  <canvas id="fx"></canvas>
+
+  <!-- ホーム -->
+  <section id="screen-home" class="screen">
+    <header class="home-top">
+      <div class="logo">
+        <div class="logo-main">将棋<span>アリーナ</span></div>
+        <div class="logo-sub">SHOGI ARENA</div>
+      </div>
+      <div id="profile-card" class="profile-card" data-go="stats"></div>
+    </header>
+    <div class="mode-grid">
+      <button class="mode-card" data-go="play">
+        <div class="mode-icon">⚔️</div><div class="mode-name">対局</div>
+        <div class="mode-desc">エンジンと真剣勝負。強さ・駒落ち・持ち時間を選べる</div>
+      </button>
+      <button class="mode-card" data-go="analysis">
+        <div class="mode-icon">🔍</div><div class="mode-name">検討</div>
+        <div class="mode-desc">棋譜を読み込んで AI と一緒に振り返る</div>
+      </button>
+      <button class="mode-card" data-go="net">
+        <div class="mode-icon">🌐</div><div class="mode-name">通信対局</div>
+        <div class="mode-desc">floodgate などのサーバーにつないで、エンジンや自分の手で対局</div>
+      </button>
+      <button class="mode-card" data-go="stats">
+        <div class="mode-icon">🏆</div><div class="mode-name">記録</div>
+        <div class="mode-desc" id="home-ach">戦績・レート・実績</div>
+      </button>
+    </div>
+    <footer class="home-bottom">
+      <div class="theme-switch" id="theme-switch"></div>
+      <div class="ctl-row">
+        <button class="btn ghost" data-go="edit">✎ 局面編集</button>
+        <button class="btn ghost" data-go="settings">⚙ 設定</button>
+      </div>
+    </footer>
+  </section>
+
+  <!-- 対局 / 検討 / 通信対局 -->
+  <section id="screen-game" class="screen">
+    <div class="game-layout">
+      <div class="gauge" id="gauge">
+        <div class="gauge-fill"></div>
+        <div class="gauge-label" id="gauge-label">50%</div>
+      </div>
+      <div class="board-col">
+        <div class="board-area" id="board-area">
+          <div class="board-wrap">
+            <div class="side side-top">
+              <div class="player-bar top" id="player-top"></div>
+              <div class="hand" id="hand-top"></div>
+            </div>
+            <div class="board" id="board"></div>
+            <div class="side side-bottom">
+              <div class="hand" id="hand-bottom"></div>
+              <div class="player-bar bottom" id="player-bottom"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tree-panel" id="tree-panel">
+        <div class="tree-resizer" id="tree-resizer" title="ドラッグで高さを変更（ダブルクリックで元の大きさ）"></div>
+        <div class="tree-head">
+          <div class="bt-tabs"><button data-btab="tree">🌳 ツリー</button><button data-btab="analysis">🔍 検討</button></div>
+          <span class="tree-title"></span><small class="bt-hint"></small>
+          <button class="btn small ghost" data-tree-detach>⧉ 別ウィンドウ</button>
+          <button class="btn small ghost" data-tree-toggle>隠す</button>
+        </div>
+        <div class="tree-canvas bt-pane" data-bpane="tree"></div>
+        <div class="bt-pane an-pane" data-bpane="analysis" id="bottom-analysis"></div>
+      </div>
+      <aside class="side-panel">
+        <div class="panel-head">
+          <button class="btn home-btn" id="btn-home" title="ホーム画面に戻る">← ホーム</button>
+          <div class="mode-title" id="mode-title"></div>
+        </div>
+        <div class="eval-main"><span id="eval-num">0</span><span id="eval-sit">形勢互角</span></div>
+        <!-- 上下 2 段のタブ。どのタブをどちらに出すかは自由に選べる -->
+        <div class="split" id="split">
+          <div class="pane" data-area="top"><div class="tabs" data-area="top"></div><div class="tab-body" data-area="top"></div></div>
+          <div class="splitter" id="splitter" title="ドラッグで上下の大きさを変更"></div>
+          <div class="pane" data-area="bottom"><div class="tabs" data-area="bottom"></div><div class="tab-body" data-area="bottom"></div></div>
+        </div>
+        <div class="controls" id="controls"></div>
+      </aside>
+      <div id="pane-store" hidden>
+        <ol class="tab-pane kifu-list" id="tab-kifu"></ol>
+        <div class="tab-pane" id="tab-chart"><canvas id="graph"></canvas></div>
+        <div class="tab-pane" id="tab-pv"></div>
+        <div class="tab-pane" id="tab-think"></div>
+        <div class="tab-pane" id="tab-live"></div>
+        <div class="tab-pane" id="tab-book"></div>
+        <div class="tab-pane" id="tab-info"></div>
+        <div class="tab-pane" id="tab-marks"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 記録 -->
+  <section id="screen-stats" class="screen page">
+    <div class="page-head"><button class="btn home-btn" data-back>← ホーム</button><h1>記録</h1></div>
+    <div id="stats-body" class="page-body"></div>
+  </section>
+
+  <!-- 設定 -->
+  <section id="screen-settings" class="screen page">
+    <div class="page-head"><button class="btn home-btn" data-back>← ホーム</button><h1>設定</h1></div>
+    <div id="settings-body" class="page-body"></div>
+  </section>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
