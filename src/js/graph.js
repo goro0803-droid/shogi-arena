@@ -54,15 +54,28 @@ export class EvalGraph {
     const accent = css.getPropertyValue('--accent').trim() || '#fc0';
 
     g.clearRect(0, 0, w, h);
-    g.globalAlpha = 0.35;
-    g.strokeStyle = grid;
+    // 目盛り（評価値 0 / ±500 / ±1000 / ±2000）。縦軸は勝率換算なので、評価値ごとの高さに線を引く
     g.lineWidth = 1;
-    for (const y of [0.25, 0.5, 0.75]) {
+    g.font = '10px sans-serif';
+    g.textBaseline = 'middle';
+    const labels = [];
+    for (const v of [0, 500, -500, 1000, -1000, 2000, -2000]) {
+      const y = Math.round((1 - winRate(v)) * h) + 0.5;
+      // 端に近すぎる線や、隣の目盛りと重なる文字は省く
+      if (y < 6 || y > h - 6 || labels.some(l => Math.abs(l - y) < 11)) continue;
+      labels.push(y);
+      g.globalAlpha = v === 0 ? 0.45 : 0.25;
+      g.strokeStyle = grid;
+      g.setLineDash(v === 0 ? [] : [2, 3]);
       g.beginPath();
-      g.moveTo(0, h * y);
-      g.lineTo(w, h * y);
+      g.moveTo(0, y);
+      g.lineTo(w, y);
       g.stroke();
+      g.globalAlpha = 0.8;
+      g.fillStyle = grid;
+      g.fillText(v > 0 ? `+${v}` : `${v}`, 3, y - 6 < 0 ? y + 6 : y - 6);
     }
+    g.setLineDash([]);
     g.globalAlpha = 1;
 
     const n = Math.max(this.values.length - 1, 1);
