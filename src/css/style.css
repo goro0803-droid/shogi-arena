@@ -395,10 +395,13 @@ button, select, input, textarea { font: inherit; color: inherit; }
   pointer-events: none;
 }
 .gauge::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; border-top: 2px dashed rgba(255, 255, 255, 0.5); z-index: 1; }
+/* 上端に上側の対局者、下端に下側の対局者の勝率を出す */
 .gauge-label {
-  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-90deg);
-  font-weight: 900; font-size: 15px; color: #fff; text-shadow: 0 0 4px #000; z-index: 2; white-space: nowrap;
+  position: absolute; left: 50%; transform-origin: center;
+  font-weight: 900; font-size: 14px; color: #fff; text-shadow: 0 0 4px #000; z-index: 2; white-space: nowrap;
 }
+.gauge-label.top { top: 44px; transform: translate(-50%, -50%) rotate(-90deg); }
+.gauge-label.bottom { bottom: 44px; transform: translate(-50%, 50%) rotate(-90deg); }
 
 /* プレイヤー表示 */
 .player-bar {

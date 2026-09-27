@@ -2139,7 +2139,11 @@ function updateEvalUI() {
   const bottomWr = board.flipped ? 1 - wr : wr;
   $('#gauge').style.setProperty('--wr', bottomWr);
   $('#gauge').classList.toggle('flipped', board.flipped);
-  $('#gauge-label').textContent = hidden ? '?' : `${Math.round(bottomWr * 100)}%`;
+  // 上端に上側、下端に下側の対局者の勝率（☗ 先手 / ☖ 後手）
+  const pct = v => (hidden ? '?' : `${Math.round(v * 100)}%`);
+  const [topMark, bottomMark] = board.flipped ? ['☗', '☖'] : ['☖', '☗'];
+  $('#gauge-top').textContent = `${topMark} ${pct(1 - bottomWr)}`;
+  $('#gauge-bottom').textContent = `${bottomMark} ${pct(bottomWr)}`;
   const marks = [];
   if (G.mode === 'analysis') {
     G.moves.forEach((_, k) => {
