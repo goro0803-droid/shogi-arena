@@ -687,6 +687,7 @@ function updateClocks() {
 function canUserMove(c) {
   if (!G || G.over && G.mode !== 'analysis') return false;
   if (G.mode === 'analysis') return true;
+  if (G.waitingStart) return false;
   return (G.mode === 'play' || G.mode === 'net') && atEnd() && G.players[c]?.kind === 'human' && !G.over;
 }
 
@@ -776,6 +777,7 @@ function checkRepetition() {
 async function engineTurn(side) {
   const token = G.token;
   const pl = G.players[side];
+  if (pl.thinking) return; // すでに考えている（手番の開始が重なった）
   let goArgs;
   if (!clockEnabled()) goArgs = `btime 0 wtime 0 byoyomi ${G.tc.engineByo}`;
   else goArgs = timeArgs();
@@ -787,7 +789,7 @@ async function engineTurn(side) {
     const m = usi && lastPos().findMove(usi);
     if (m) {
       await sleep(600);
-      if (G?.token !== token || G.over) return;
+      if (G?.token !== token || G.over || G.positions.length - 1 !== ply) return;
       addLive(`${pl.name}：定跡手 ${moveToJa(lastPos(), m, ply > 0 ? G.moves[ply - 1].m.to : -1)}`, 'normal');
       doMove(m);
       return;
@@ -802,8 +804,9 @@ async function engineTurn(side) {
   const minDelay = G.mode === 'net' ? 0 : 450;
   const wait = minDelay - (performance.now() - t0);
   if (wait > 0) await sleep(wait);
-  if (G?.token !== token || G.over) return;
   pl.thinking = false;
+  // 考えているあいだに局面が変わっていたら、その答えは使わない
+  if (G?.token !== token || G.over || G.positions.length - 1 !== ply) return;
   G.best[ply] = res.move;
   if (ply > 0) announce(ply, G.evals[ply]);
   if (G.mode === 'net') { // 投了・宣言はサーバーへ送り、結果はサーバーからの通知で終局する
@@ -1110,8 +1113,13 @@ async function startPlay(cfg) {
   board.setPosition(curPos());
   cutIn('対局開始', 'よろしくお願いします', 'start');
   sfx.start();
+  // 演出のあいだは指せないようにする（ここで指せると、エンジンの手番が二重に始まってしまう）
+  G.waitingStart = true;
+  const token = G.token;
   await sleep(1200);
-  if (G?.mode === 'play') startTurn();
+  if (G?.token !== token || G.mode !== 'play') return;
+  G.waitingStart = false;
+  startTurn();
 }
 
 function enterGameScreen(title) {
