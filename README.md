@@ -3,7 +3,7 @@
 ゲームのように遊べる将棋 GUI。USI エンジン（Sailfish、水匠、やねうら王 など）に対応した Windows 用のデスクトップアプリです。
 エンジンとの対局、AI と一緒の検討、floodgate での通信対局まで、これ 1 つで楽しめます。
 
-**[⬇ 最新版をダウンロード](../../releases/latest)**（無料・Windows 10 / 11）
+**[⬇ 最新版をダウンロード](../../releases/latest)**（無料・Windows 10 / 11） ／ [紹介サイト](https://goro0803-droid.github.io/shogi-arena/)
 
 ![ホーム画面](docs/images/home.png)
 
