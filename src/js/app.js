@@ -154,11 +154,22 @@ async function ensureDefaultEngines() {
       if (S.subEngines) S.subEngines = [...new Set(S.subEngines.map(fix))];
     }
   }
+  const fresh = S.engines.length === 0; // 初めての起動（名前はこのあと取るので、取り直しは要らない）
   for (const p of paths) {
     if (S.engines.some(e => e.path === p)) continue;
     let name = 'Sailfish';
     try { name = await probeEngineName(p); } catch { /* 起動できなくても登録だけする */ }
     S.engines.push({ id: 'e' + Date.now() + Math.random().toString(36).slice(2, 6), name, path: p });
+  }
+  // アプリを更新したあとは、同梱エンジンの表示名（エンジンが名乗る名前）を取り直す
+  // （同梱エンジンの版が上がっても、前の版の名前が残らないようにする）
+  const ver = await window.api.appVersion();
+  if (S.engineNamesVersion !== ver) {
+    for (const e of fresh ? [] : S.engines) {
+      if (!paths.includes(e.path)) continue;
+      try { e.name = await probeEngineName(e.path); } catch { /* 取れなければ今の名前のまま */ }
+    }
+    S.engineNamesVersion = ver;
   }
   // 検討の初期エンジンは、強いほう（Sailfish 2）があればそちらにする
   if (!S.analysisEngine && S.engines.length) {

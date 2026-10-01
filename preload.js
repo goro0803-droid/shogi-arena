@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('api', {
   engineKill: id => ipcRenderer.send('engine:kill', id),
   engineDefaults: () => ipcRenderer.invoke('engine:defaults'),
   engineExists: p => ipcRenderer.invoke('engine:exists', p),
+  appVersion: () => ipcRenderer.invoke('app:version'),
   onEngineLine: cb => ipcRenderer.on('engine:line', (_e, id, line) => cb(id, line)),
   onEngineExit: cb => ipcRenderer.on('engine:exit', (_e, id, code) => cb(id, code)),
   openEngineDialog: () => ipcRenderer.invoke('dialog:openEngine'),

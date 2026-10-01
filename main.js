@@ -108,6 +108,7 @@ ipcMain.handle('engine:defaults', () => {
 });
 
 ipcMain.handle('engine:exists', (_e, p) => !!p && fs.existsSync(p));
+ipcMain.handle('app:version', () => app.getVersion());
 
 // ---- ファイル ----
 
