@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>将棋アリーナ - ゲームのように遊べる将棋ソフト</title>
-<meta name="description" content="将棋アリーナは、ゲームのように遊べる無料の将棋ソフト（Windows）。5 つのテーマ、エンジンとの対局、AI と一緒の検討、floodgate での通信対局に対応。将棋エンジン Sailfish を同梱。">
+<meta name="description" content="将棋アリーナは、ゲームのように遊べる無料の将棋ソフト（Windows）。5 つのテーマ、エンジンとの対局、AI と一緒の検討、floodgate での通信対局に対応。将棋エンジン Sailfish（2 種類）を同梱。">
 <link rel="icon" href="images/icon.png">
 <meta property="og:type" content="website">
 <meta property="og:title" content="将棋アリーナ - ゲームのように遊べる将棋ソフト">
@@ -98,7 +98,7 @@ section .sub { text-align: center; color: var(--dim); margin: 0 auto 40px; max-w
 .checks b { color: var(--gold2); }
 
 /* Sailfish */
-.engine { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.engine { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 18px; }
 .engine .card p + p { margin-top: 8px; }
 
 /* 手順 */
@@ -154,7 +154,7 @@ footer .links { display: flex; gap: 22px; justify-content: center; flex-wrap: wr
     <a class="btn primary" href="https://github.com/goro0803-droid/shogi-arena/releases/latest">⬇ ダウンロード（Windows）</a>
     <a class="btn ghost" href="https://github.com/goro0803-droid/shogi-arena">GitHub で見る</a>
   </div>
-  <div class="note"><span>無料・MIT ライセンス</span><span>Windows 10・11（64bit）</span><span>将棋エンジン Sailfish 同梱</span></div>
+  <div class="note"><span>無料・MIT ライセンス</span><span>Windows 10・11（64bit）</span><span>将棋エンジン Sailfish 2 種類を同梱</span></div>
   <div class="shot"><img src="images/analysis.png" alt="将棋アリーナの検討画面。評価値グラフ、候補手の矢印、読み筋の表が並ぶ"></div>
 </div>
 
@@ -222,14 +222,20 @@ footer .links { display: flex; gap: 22px; justify-content: center; flex-wrap: wr
 <!-- Sailfish -->
 <section id="sailfish" class="alt">
   <div class="wrap">
-    <h2 class="serif">将棋エンジン Sailfish 同梱</h2>
+    <h2 class="serif">将棋エンジン Sailfish を 2 種類同梱</h2>
     <p class="sub">インストールしてすぐ対局できます。もっと強い相手がほしくなったら、お好みのエンジンを追加できます。</p>
     <div class="engine">
       <div class="card">
-        <h3>Sailfish（セイルフィッシュ）</h3>
+        <h3>Sailfish 1.0（セイルフィッシュ）</h3>
         <p>Rust で一から書いたオリジナルの USI エンジンです。機械学習に頼らない手作りの評価関数で、遊んで楽しい「ほどよい強さ」を目指しています。</p>
         <p>ソースコードは MIT ライセンスで公開しています。</p>
-        <p><a href="https://github.com/goro0803-droid/sailfish">Sailfish を GitHub で見る →</a></p>
+        <p><a href="https://github.com/goro0803-droid/sailfish">Sailfish 1.0 を GitHub で見る →</a></p>
+      </div>
+      <div class="card">
+        <h3>Sailfish 2</h3>
+        <p>1.0 から分かれた、より強いバージョンです。複数のスレッドで同時に読み、検討でも手ごたえのある読み筋を出します。</p>
+        <p>使うスレッドの数は、お使いの CPU に合わせて自動で決まります（エンジンの設定で変えられます）。</p>
+        <p><a href="https://github.com/goro0803-droid/sailfish2">Sailfish 2 を GitHub で見る →</a></p>
       </div>
       <div class="card">
         <h3>ほかのエンジンも使えます</h3>
@@ -276,7 +282,8 @@ footer .links { display: flex; gap: 22px; justify-content: center; flex-wrap: wr
   <div class="wrap">
     <div class="links">
       <a href="https://github.com/goro0803-droid/shogi-arena">将棋アリーナ（GitHub）</a>
-      <a href="https://github.com/goro0803-droid/sailfish">Sailfish（GitHub）</a>
+      <a href="https://github.com/goro0803-droid/sailfish">Sailfish 1.0（GitHub）</a>
+      <a href="https://github.com/goro0803-droid/sailfish2">Sailfish 2（GitHub）</a>
       <a href="https://github.com/goro0803-droid/shogi-arena/releases">リリース一覧</a>
       <a href="https://github.com/goro0803-droid/shogi-arena/issues">不具合・要望</a>
     </div>

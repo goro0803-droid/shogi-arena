@@ -24,7 +24,8 @@
 - `ShogiArena-Setup-<バージョン>.exe` … インストーラー（スタートメニューとデスクトップにショートカットができます）
 - `ShogiArena-<バージョン>-win-x64.zip` … インストール不要版（解凍して `Shogi Arena.exe` を起動）
 
-将棋エンジン **Sailfish 1.0** が同梱されていて、初回起動時に自動で登録されます。
+将棋エンジン **Sailfish 1.0**（ちょうどよい強さ）と **Sailfish 2**（複数のスレッドで読む、より強いバージョン）が同梱されていて、初回起動時に自動で登録されます。
+対局する相手は、対局の設定画面で選べます。検討の初期エンジンは Sailfish 2 です。
 他のエンジン（水匠、やねうら王 など）は「設定 → エンジンを追加」から登録できます。
 
 > 初回起動時に Windows の「PC を保護しました」という画面が出た場合は、
@@ -34,7 +35,7 @@
 
 ```
 npm install
-npm start       # 起動（隣の ../Sailfish/target/release/sailfish.exe を自動で登録）
+npm start       # 起動（隣の ../Sailfish と ../Sailfish2 でビルドしたエンジンを自動で登録）
 npm run dist    # 配布用のインストーラーと zip を dist/ に作る
 ```
 

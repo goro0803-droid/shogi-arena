@@ -135,13 +135,14 @@ async function probeEngineName(path) {
 async function ensureDefaultEngines() {
   if (!hasApi) return;
   const paths = await window.api.engineDefaults();
-  // 同梱の Sailfish の場所が変わったとき（アンインストール、zip 版の移動など）は、
+  // 同梱のエンジン（Sailfish など）の場所が変わったとき（アンインストール、zip 版の移動など）は、
   // 見つからなくなった古い登録を今の場所に付け替え、重複した登録はまとめる
-  const isBundled = p => /[\\/]resources[\\/]engines[\\/]sailfish\.exe$/i.test(p || '');
-  const cur = paths.find(isBundled);
-  if (cur) {
+  const bundledName = p => ((/[\\/]resources[\\/]engines[\\/]([^\\/]+)$/i.exec(p || '') || [])[1] || '').toLowerCase();
+  for (const cur of paths) {
+    const name = bundledName(cur);
+    if (!name) continue;
     for (const e of S.engines) {
-      if (isBundled(e.path) && e.path !== cur && !(await window.api.engineExists(e.path))) e.path = cur;
+      if (bundledName(e.path) === name && e.path !== cur && !(await window.api.engineExists(e.path))) e.path = cur;
     }
     const keep = S.engines.find(e => e.path === cur);
     const dupIds = new Set(S.engines.filter(e => e.path === cur && e !== keep).map(e => e.id));
@@ -159,7 +160,10 @@ async function ensureDefaultEngines() {
     try { name = await probeEngineName(p); } catch { /* 起動できなくても登録だけする */ }
     S.engines.push({ id: 'e' + Date.now() + Math.random().toString(36).slice(2, 6), name, path: p });
   }
-  if (!S.analysisEngine && S.engines[0]) S.analysisEngine = S.engines[0].id;
+  // 検討の初期エンジンは、強いほう（Sailfish 2）があればそちらにする
+  if (!S.analysisEngine && S.engines.length) {
+    S.analysisEngine = (S.engines.find(e => /sailfish2/i.test(e.path)) || S.engines[0]).id;
+  }
   saveStore();
 }
 

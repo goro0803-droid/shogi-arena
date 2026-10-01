@@ -1,18 +1,28 @@
-// 配布用に Sailfish を engines/ へコピーする（隣の Sailfish フォルダでビルドしたもの）
+// 配布用に Sailfish 1.0 と Sailfish 2 を engines/ へコピーする（隣のフォルダでビルドしたもの）
 const fs = require('fs');
 const path = require('path');
 
 const root = path.join(__dirname, '..');
-const candidates = [
-  path.join(root, '..', 'Sailfish', 'target', 'release', 'sailfish.exe'),
-  path.join(root, '..', 'Sailfish', 'target-dev', 'release', 'sailfish.exe'),
+const engines = [
+  { dir: 'Sailfish', exe: 'sailfish.exe', hint: 'Sailfish フォルダで cargo build --release' },
+  { dir: 'Sailfish2', exe: 'sailfish2.exe', hint: 'Sailfish2 フォルダで cargo build --release' },
 ];
-const src = candidates.filter(p => fs.existsSync(p))
-  .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs)[0];
-if (!src) {
-  console.error('sailfish.exe が見つかりません。Sailfish フォルダで cargo build --release を実行してください。');
-  process.exit(1);
-}
+
 fs.mkdirSync(path.join(root, 'engines'), { recursive: true });
-fs.copyFileSync(src, path.join(root, 'engines', 'sailfish.exe'));
-console.log(`engines/sailfish.exe <- ${src}`);
+let failed = false;
+for (const { dir, exe, hint } of engines) {
+  const candidates = [
+    path.join(root, '..', dir, 'target', 'release', exe),
+    path.join(root, '..', dir, 'target-dev', 'release', exe),
+  ];
+  const src = candidates.filter(p => fs.existsSync(p))
+    .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs)[0];
+  if (!src) {
+    console.error(`${exe} が見つかりません。${hint} を実行してください。`);
+    failed = true;
+    continue;
+  }
+  fs.copyFileSync(src, path.join(root, 'engines', exe));
+  console.log(`engines/${exe} <- ${src}`);
+}
+if (failed) process.exit(1);

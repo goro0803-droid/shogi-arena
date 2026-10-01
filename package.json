@@ -1,7 +1,7 @@
 {
   "name": "shogi-arena",
   "productName": "Shogi Arena",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "ゲームのように遊べる将棋 GUI（USI エンジン対応）",
   "main": "main.js",
   "author": "dax",
@@ -36,7 +36,8 @@
         "from": "engines",
         "to": "engines",
         "filter": [
-          "sailfish.exe"
+          "sailfish.exe",
+          "sailfish2.exe"
         ]
       }
     ],

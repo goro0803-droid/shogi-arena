@@ -94,12 +94,15 @@ ipcMain.on('engine:kill', (_e, id) => {
   setTimeout(() => { if (!p.killed && p.exitCode === null) p.kill(); }, 1500);
 });
 
-/** 同梱・隣接フォルダにある既定エンジン（Sailfish）を探す */
+/** 同梱・隣接フォルダにある既定エンジン（Sailfish 1.0 と Sailfish 2）を探す */
 ipcMain.handle('engine:defaults', () => {
   const candidates = [
     path.join(process.resourcesPath, 'engines', 'sailfish.exe'), // インストール版（同梱）
+    path.join(process.resourcesPath, 'engines', 'sailfish2.exe'),
     path.join(__dirname, 'engines', 'sailfish.exe'),
+    path.join(__dirname, 'engines', 'sailfish2.exe'),
     path.join(__dirname, '..', 'Sailfish', 'target', 'release', 'sailfish.exe'),
+    path.join(__dirname, '..', 'Sailfish2', 'target', 'release', 'sailfish2.exe'),
   ];
   return candidates.filter(p => fs.existsSync(p));
 });
