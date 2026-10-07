@@ -3042,7 +3042,8 @@ function renderSettings() {
   $('#settings-body').querySelectorAll('[name=ae]').forEach(r => r.onchange = () => { S.analysisEngine = r.value; saveStore(); });
   $('#settings-body').querySelectorAll('[data-sub]').forEach(c => c.onchange = () => {
     const id = c.dataset.sub;
-    S.subEngines = (S.subEngines || []).filter(x => x !== id);
+    // 削除済みのエンジンの ID が残っていると上限を誤判定するので、今登録されているものだけ残す
+    S.subEngines = (S.subEngines || []).filter(x => x !== id && S.engines.some(e => e.id === x));
     if (c.checked) {
       if (S.subEngines.length >= 3) { c.checked = false; toast('同時検討は3つまでです', '', 'ℹ️'); return; }
       S.subEngines.push(id);
@@ -3052,6 +3053,7 @@ function renderSettings() {
   $('#settings-body').querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
     S.engines = S.engines.filter(e => e.id !== b.dataset.del);
     if (S.analysisEngine === b.dataset.del) S.analysisEngine = S.engines[0]?.id || null;
+    if (S.subEngines) S.subEngines = S.subEngines.filter(x => x !== b.dataset.del);
     saveStore();
     renderSettings();
   });
