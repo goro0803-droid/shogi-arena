@@ -798,8 +798,14 @@ async function engineTurn(side) {
   else goArgs = timeArgs();
   if (pl.level.depth) goArgs += ` depth ${pl.level.depth}`;
   const ply = G.positions.length - 1;
+  // 通信対局の先読み（Ponder）：相手が予想どおりに指したか
+  const pd = G.ponder;
+  G.ponder = null;
+  const ponderHit = !!pd && pd.ply === ply - 1 && G.moves[ply - 1]?.usi === pd.usi;
+  if (pd && !ponderHit) await pl.engine.stop(); // 外れ：先読みを捨てる
+  if (G?.token !== token || G.over || G.positions.length - 1 !== ply) return;
   // 定跡を使う設定なら、登録された手から選んで指す
-  if (G.useBook) {
+  if (G.useBook && !ponderHit) {
     const usi = pickBookMove(lastPos());
     const m = usi && lastPos().findMove(usi);
     if (m) {
@@ -814,7 +820,16 @@ async function engineTurn(side) {
   renderPlayers();
   renderControls();
   const t0 = performance.now();
-  const res = await pl.engine.go(positionCmd(), goArgs, info => onEngineInfo(side, ply, info, token));
+  const onInfo = info => onEngineInfo(side, ply, info, token);
+  let res;
+  if (ponderHit) {
+    // 当たり：先読みの読み筋をこの局面のものとして表示し、そのまま考えさせる
+    G.ponderStats.hit++;
+    if (pd.info) onInfo(pd.info);
+    res = await pl.engine.ponderhit(onInfo);
+  } else {
+    res = await pl.engine.go(positionCmd(), goArgs, onInfo);
+  }
   if (G?.token !== token || G.over) return;
   const minDelay = G.mode === 'net' ? 0 : 450;
   const wait = minDelay - (performance.now() - t0);
@@ -832,7 +847,11 @@ async function engineTurn(side) {
   if (res.move === 'win') return endGame(side, '入玉宣言');
   const m = lastPos().findMove(res.move);
   if (!m) return endGame(side ^ 1, '反則（不正な指し手）');
-  if (G.mode === 'net') netSendMove(m, pl.info);
+  if (G.mode === 'net') {
+    // 先読みは、サーバーから自分の手の消費時間が届いて持ち時間が確定してから始める（netOnMove）
+    G.netPonderNext = NET?.cfg.ponder ? res.ponder : null;
+    netSendMove(m, pl.info);
+  }
   doMove(m);
 }
 
@@ -923,6 +942,8 @@ async function endGame(winner, reason) {
     else if (winner < 0) cutIn('引き分け', reason, 'draw');
     else { cutIn('敗北', reason, 'lose'); sfx.lose(); }
     addLive(`通信対局の結果：${winner === my ? '勝ち' : winner < 0 ? '引き分け' : '負け'}（${reason}）`, 'hot');
+    const ps = G.ponderStats;
+    if (ps?.tries) addLive(`先読み（Ponder）の的中：${ps.hit} / ${ps.tries} 手（${Math.round(ps.hit / ps.tries * 100)}%）`, 'net');
   }
 }
 
@@ -1195,6 +1216,7 @@ function openNetSetup() {
         <option value="human" ${last.player === 'human' ? 'selected' : ''}>👤 自分で指す</option></select></label>
     </div>
     <label class="check"><input type="checkbox" id="ns-eval" ${last.sendEval !== false ? 'checked' : ''}> エンジンの評価値・読み筋をサーバーに送る（floodgate の形式）</label>
+    <label class="check"><input type="checkbox" id="ns-ponder" ${last.ponder !== false ? 'checked' : ''}> 相手の手番中もエンジンに考えさせる（Ponder：相手の手を予想して先読みする）</label>
     <label class="check"><input type="checkbox" id="ns-repeat" ${last.repeat ? 'checked' : ''}> 終局したら次の対局を自動で待つ</label>
     <label class="check"><input type="checkbox" id="ns-save" ${last.savePass ? 'checked' : ''}> トリップ（パスワード）をこの PC に保存する</label>
     <p class="muted small" id="ns-note"></p>
@@ -1217,7 +1239,8 @@ function openNetSetup() {
       host: m.querySelector('#ns-host').value.trim(), port: +m.querySelector('#ns-port').value || 4081,
       name: m.querySelector('#ns-name').value.trim(), game: m.querySelector('#ns-game').value,
       pass: m.querySelector('#ns-pass').value, player: m.querySelector('#ns-player').value,
-      sendEval: m.querySelector('#ns-eval').checked, repeat: m.querySelector('#ns-repeat').checked,
+      sendEval: m.querySelector('#ns-eval').checked, ponder: m.querySelector('#ns-ponder').checked,
+      repeat: m.querySelector('#ns-repeat').checked,
       savePass: m.querySelector('#ns-save').checked,
     };
     if (!/^[A-Za-z0-9_\-@.]+$/.test(cfg.name)) return toast('ログイン名は半角英数字で入力してください', '', '⚠️');
@@ -1241,7 +1264,7 @@ async function startNet(cfg) {
   if (cfg.player !== 'human') {
     ed = findEngine(cfg.player);
     engine = createEngine(ed.path);
-    if (!await startEngines([[engine, ed]])) return;
+    if (!await startEngines([[engine, ed, { USI_Ponder: cfg.ponder ? 'true' : 'false' }]])) return;
   }
   NET = { cfg, host, port, engine, ed, client: null, closedByUser: false };
   netWaitingScreen(`${host}:${port} に接続しています…`);
@@ -1384,6 +1407,7 @@ function netOnMove(mv, t) {
     G.netPending = null;
     netApplyTime(color, t);
     updateClocks();
+    netStartPonder();
     return;
   }
   const pos = lastPos();
@@ -1391,6 +1415,31 @@ function netOnMove(mv, t) {
   if (!m) { addLive(`受信した手を解釈できません：${mv}`, 'bad'); return; }
   netApplyTime(color, t);
   doMove(m);
+}
+
+/**
+ * 相手の手番中の先読み（Ponder）を始める。エンジンが bestmove で示した予想手（ponder）を
+ * 指した局面を go ponder で読ませ、相手の手が届いたら engineTurn で ponderhit か stop をする。
+ */
+function netStartPonder() {
+  const usi = G.netPonderNext;
+  G.netPonderNext = null;
+  if (!usi || !NET?.cfg.ponder || G.over) return;
+  const my = G.netMy;
+  const pl = G.players[my];
+  if (pl?.kind !== 'engine' || typeof pl.engine.ponder !== 'function') return;
+  const pos = lastPos();
+  if (pos.side === my) return;
+  const m = pos.findMove(usi);
+  if (!m) return;
+  const pd = { ply: G.positions.length - 1, usi: moveToUsi(m), info: null };
+  const base = positionCmd();
+  const cmd = base.includes(' moves ') ? `${base} ${pd.usi}` : `${base} moves ${pd.usi}`;
+  G.ponder = pd;
+  G.ponderStats = G.ponderStats || { tries: 0, hit: 0 };
+  G.ponderStats.tries++;
+  // 先読み中の読み筋はまだ盤に出さず、最後の評価値だけ控えておく（当たったら表示する）
+  pl.engine.ponder(cmd, timeArgs(), info => { if (info.score != null && !info.bound) pd.info = info; });
 }
 
 function netOnResult(res, reason) {

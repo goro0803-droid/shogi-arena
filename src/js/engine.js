@@ -196,7 +196,29 @@ export class UsiEngine {
     });
   }
 
+  /**
+   * 相手の手番中に、予想した相手の手を指した局面を先読みする（go ponder）。
+   * 予想が当たれば ponderhit()、外れれば stop() か次の go() で捨てる。
+   */
+  ponder(positionCmd, goArgs, onInfo) {
+    this.onInfo = onInfo;
+    this.send(positionCmd);
+    this.searching = true;
+    this.ponderPromise = new Promise(res => { this.goResolve = res; });
+    this.send('go ponder ' + goArgs);
+  }
+
+  /** 予想が当たった。先読みをそのまま本番の思考に切り替えて bestmove を待つ */
+  ponderhit(onInfo) {
+    this.onInfo = onInfo;
+    const p = this.ponderPromise;
+    this.ponderPromise = null;
+    this.send('ponderhit');
+    return p;
+  }
+
   stop() {
+    this.ponderPromise = null;
     if (!this.searching) return Promise.resolve(null);
     return new Promise(res => {
       const prev = this.goResolve;
