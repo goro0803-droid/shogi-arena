@@ -980,6 +980,8 @@ function showResult(result, reason, rec, newAch) {
 }
 
 function stopEngines() {
+  // 通信対局の待ちの表示は盤の場所に重ねているので、次の対局に残らないよう消す
+  netClearBanner();
   // 通信対局の接続とエンジンも終わらせる
   if (NET) {
     NET.closedByUser = true;
@@ -1297,6 +1299,8 @@ async function startNet(cfg) {
 
 /** 接続中・対局待ちの画面 */
 function netWaitingScreen(text) {
+  // 通信対局を終えた後に、サーバーからの通知が遅れて届いても待ちの画面を作らない
+  if (!NET) return;
   if (!G || G.mode !== 'net' || G.netStarted) {
     newGame('net', START_SFEN);
     G.players = [{ kind: 'remote', name: '（対局待ち）' }, { kind: 'remote', name: '（対局待ち）' }];
@@ -1329,6 +1333,7 @@ function netFail(msg) {
 
 /** 対局条件（Game_Summary）を受け取ったら盤を用意して同意する */
 function netOnSummary(s) {
+  if (!NET) return; // 通信対局を終えた後に届いた通知
   const rec = parseRecord(s.positionLines.join('\n'));
   newGame('net', rec.startSfen);
   importTree(rec.tree);
@@ -1361,6 +1366,7 @@ function netOnSummary(s) {
 }
 
 function netOnStart() {
+  if (!NET || G?.mode !== 'net') return; // 通信対局を終えた後に届いた通知
   netClearBanner();
   G.netWaiting = false;
   G.netStarted = true;
