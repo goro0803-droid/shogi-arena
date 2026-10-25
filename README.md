@@ -25,6 +25,7 @@
 - `ShogiArena-<バージョン>-win-x64.zip` … インストール不要版（解凍して `Shogi Arena.exe` を起動）
 
 将棋エンジン **Sailfish 1.0**（ちょうどよい強さ）と **Sailfish 2**（複数のスレッドで読み、強いソフトの評価（めきっと氏の公開教師データ）から学習したニューラルネットワークで評価する、ぐっと強いバージョン。floodgate の強いソフトの序盤から作った定跡と、入玉宣言にも対応）が同梱されていて、初回起動時に自動で登録されます。
+Sailfish 2 は、AVX2 に対応した CPU では自動で速い AVX2 版（`sailfish2-avx2.exe`）が使われます（読む結果は同じです）。
 対局する相手は、対局の設定画面で選べます。検討の初期エンジンは Sailfish 2 です。
 他のエンジン（水匠、やねうら王 など）は「設定 → エンジンを追加」から登録できます。
 
@@ -37,6 +38,13 @@
 npm install
 npm start       # 起動（隣の ../Sailfish と ../Sailfish2 でビルドしたエンジンを自動で登録）
 npm run dist    # 配布用のインストーラーと zip を dist/ に作る
+```
+
+`npm run dist` の前に、Sailfish2 フォルダで一般向け版と AVX2 版の2つをビルドしておきます（`build/copy-engine.js` が engines/ へ写します）。
+
+```
+cargo build --release
+RUSTFLAGS="-C target-cpu=x86-64-v3" cargo build --release --target-dir target-avx2
 ```
 
 ## 機能

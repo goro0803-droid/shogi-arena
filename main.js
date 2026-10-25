@@ -2,7 +2,7 @@
 const { app, BrowserWindow, ipcMain, dialog, clipboard, shell, nativeImage } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { spawn } = require('child_process');
+const { spawn, execFileSync } = require('child_process');
 const net = require('net');
 
 const engines = new Map();
@@ -49,12 +49,33 @@ function createWindow() {
 
 // ---- USI エンジン ----
 
+/**
+ * Sailfish 2（sailfish2.exe）の隣に AVX2 版（sailfish2-avx2.exe）があり、CPU が対応していれば、AVX2 版を使う。
+ * 対応しているかは、どの CPU でも動く sailfish2.exe に --cpu-avx2 を付けて聞く（答えは覚えておく）。
+ * 登録しているエンジンの場所は変えない。
+ */
+const avx2Ok = new Map();
+function pickEngineExe(exePath) {
+  if (path.basename(exePath).toLowerCase() !== 'sailfish2.exe') return exePath;
+  const alt = path.join(path.dirname(exePath), 'sailfish2-avx2.exe');
+  if (!fs.existsSync(alt)) return exePath;
+  if (!avx2Ok.has(exePath)) {
+    let ok = false;
+    try {
+      ok = execFileSync(exePath, ['--cpu-avx2'], { timeout: 5000, windowsHide: true, encoding: 'utf8', input: '' }).trim() === 'avx2 yes';
+    } catch { /* 古い版など、答えられなければ一般向けを使う */ }
+    avx2Ok.set(exePath, ok);
+  }
+  return avx2Ok.get(exePath) ? alt : exePath;
+}
+
 ipcMain.handle('engine:start', (_e, exePath) => {
   const id = nextId++;
   let proc;
   if (!exePath || !fs.existsSync(exePath)) return { error: `エンジンが見つかりません: ${exePath}` };
   try {
-    proc = spawn(exePath, [], { cwd: path.dirname(exePath), windowsHide: true });
+    const exe = pickEngineExe(exePath);
+    proc = spawn(exe, [], { cwd: path.dirname(exe), windowsHide: true });
   } catch (err) {
     return { error: err.message };
   }
