@@ -13,7 +13,7 @@ import { createEngine, hasApi, MATE_SCORE } from './engine.js';
 import { BoardView, setPieceStyle } from './board-view.js';
 import { EvalGraph, winRate, formatScore, setSigmoid } from './graph.js';
 import {
-  sfx, burst, ring, confetti, cutIn, toast, setEffectTheme, setVolume, setSpeech, speak, moveReading,
+  sfx, burst, ring, confetti, cutIn, toast, setEffectTheme, setVolume, setLiteFx, setSpeech, speak, moveReading,
 } from './effects.js';
 import { S, loadStore, saveStore } from './store.js';
 import { LEVELS, TIME_CONTROLS, ACHIEVEMENTS, levelInfo, recordGame, unlock } from './progress.js';
@@ -100,6 +100,10 @@ function applyLook() {
   setPieceStyle(S.pieceStyle || 'one');
   b.dataset.board = S.boardStyle || 'theme';
   b.dataset.piece = S.pieceStyle || 'one';
+  // 演出を減らす：CSS の動き続けるアニメーション・ぼかしと、パーティクル・カットインを止める
+  b.dataset.fx = S.liteFx ? 'lite' : 'full';
+  if (panelWin && !panelWin.closed) panelWin.document.body.dataset.fx = b.dataset.fx;
+  setLiteFx(!!S.liteFx);
   if (S.boardStyle === 'image' && S.boardImage) b.style.setProperty('--board-bg', `url("${S.boardImage}") center / cover`);
   else b.style.removeProperty('--board-bg');
   if (S.standImage) b.style.setProperty('--stand-bg', `url("${S.standImage}") center / cover`);
@@ -535,7 +539,7 @@ function detachPanel() {
   d.open();
   d.write(`<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>検討・ツリー - 将棋アリーナ</title>
     <link rel="stylesheet" href="${new URL('css/style.css', location.href).href}"></head>
-    <body class="panel-window" data-theme="${esc(S.theme)}"><div id="bg"></div></body></html>`);
+    <body class="panel-window" data-theme="${esc(S.theme)}" data-fx="${S.liteFx ? 'lite' : 'full'}"><div id="bg"></div></body></html>`);
   d.close();
   panelWin = w;
   treePanel.classList.add('detached');
@@ -2974,6 +2978,7 @@ function renderSettings() {
         <label class="field"><span>名前</span><input id="set-name" value="${esc(S.profile.name)}" maxlength="16"></label>
         <label class="field"><span>音量</span><input id="set-vol" type="range" min="0" max="1" step="0.05" value="${S.volume}"></label>
         <label class="check"><input type="checkbox" id="set-speech" ${S.speech ? 'checked' : ''}> 指し手を読み上げる</label>
+        <label class="check"><input type="checkbox" data-set="liteFx" ${S.liteFx ? 'checked' : ''}> 演出を減らして軽くする（花びら・大きな文字・背景の動き・ぼかしを止める）</label>
       </div>
       <div class="card"><h3>USI エンジン</h3>
         <p class="muted small">Sailfish は最初から入っています。ほかのエンジン（やねうら王 など）はダウンロードして「エンジンを追加」から登録できます。</p>

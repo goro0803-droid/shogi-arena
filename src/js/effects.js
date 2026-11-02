@@ -5,8 +5,15 @@ const isWa = () => theme === 'wa' || theme === 'seigaiha';
 let volume = 0.7;
 let actx = null;
 
+// 演出を減らす（設定）：パーティクルとカットインを出さない。効果音は音量の設定に従う
+let liteFx = false;
+
 export function setEffectTheme(t) { theme = t; }
 export function setVolume(v) { volume = v; }
+export function setLiteFx(on) {
+  liteFx = on;
+  if (on) { parts.length = 0; rings.length = 0; }
+}
 
 function ac() {
   if (!actx) actx = new AudioContext();
@@ -138,6 +145,7 @@ const PALETTE = {
 };
 
 export function burst(x, y, { count = 24, speed = 5, colors = null, size = 6, gravity = 0.12, life = 60 } = {}) {
+  if (liteFx) return;
   const cols = colors || PALETTE[theme];
   for (let i = 0; i < count; i++) {
     const a = Math.random() * Math.PI * 2;
@@ -153,6 +161,7 @@ export function burst(x, y, { count = 24, speed = 5, colors = null, size = 6, gr
 }
 
 export function ring(x, y, color = null, maxR = 60) {
+  if (liteFx) return;
   rings.push({ x, y, r: 4, maxR, color: color || PALETTE[theme][0], life: 1 });
   loop();
 }
@@ -246,6 +255,7 @@ function loop() {
 
 /** 画面中央に大きな文字を出す（王手・対局開始・勝敗など） */
 export function cutIn(text, sub = '', kind = '') {
+  if (liteFx) return;
   const el = document.createElement('div');
   el.className = `cutin ${kind}`;
   el.innerHTML = `<div class="cutin-band"></div><div class="cutin-text">${text}</div>${sub ? `<div class="cutin-sub">${sub}</div>` : ''}`;

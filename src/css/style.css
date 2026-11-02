@@ -1031,3 +1031,15 @@ body[data-piece="two"] .piece .face span.two { font-size: calc(var(--cell) * 0.3
   .mode-grid { gap: 14px; }
   .mode-name { font-size: 30px; }
 }
+
+/* 演出を減らす（設定 liteFx）：動き続けるアニメーションと、背景のぼかし（重い）を止める。
+   読み込み中の回転・考え中の点・残り時間の点滅のように、状態を知らせる動きは残す */
+[data-fx="lite"] #bg,
+[data-fx="lite"] .mode-card::before,
+[data-fx="lite"] .player-bar.thinking .pb-avatar,
+[data-fx="lite"] .cell.target::after,
+[data-fx="lite"] .cell.target-capture::after,
+[data-fx="lite"] .cell.check,
+[data-fx="lite"] .piece.promote-flash .face::after,
+[data-fx="lite"] .levelup { animation: none; }
+[data-fx="lite"] *, [data-fx="lite"] *::before, [data-fx="lite"] *::after { backdrop-filter: none !important; }
